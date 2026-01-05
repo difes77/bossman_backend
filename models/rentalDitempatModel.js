@@ -1,6 +1,7 @@
 const db = require("../config/db");
 
 const createSewaDitempat = async (data) => {
+  // Pastikan SEWA_DITEMPAT dan PS menggunakan huruf kecil semua
   const sql = `
     INSERT INTO sewa_ditempat 
     (id_ps, id_karyawan, nama_penyewa, waktu_mulai, durasi_menit, waktu_selesai_estimasi, total_harga, diskon_persen, nominal_diskon, total_biaya, id_cabang)
