@@ -3,7 +3,7 @@ const db = require("../config/db");
 exports.getAll = async (req, res) => {
   try {
     const [rows] = await db.execute(
-      `SELECT * FROM Game ORDER BY created_at DESC`
+      `SELECT * FROM game ORDER BY created_at DESC`
     );
     res.json(rows);
   } catch (err) {
@@ -18,7 +18,7 @@ exports.create = async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO Game (nama_game, deskripsi) VALUES (?, ?)`,
+      `INSERT INTO game (nama_game, deskripsi) VALUES (?, ?)`,
       [nama_game, deskripsi]
     );
     res.status(201).json({ message: "Game ditambahkan", id: result.insertId });
@@ -33,7 +33,7 @@ exports.update = async (req, res) => {
 
   try {
     await db.execute(
-      `UPDATE Game SET nama_game = ?, deskripsi = ? WHERE id_game = ?`,
+      `UPDATE game SET nama_game = ?, deskripsi = ? WHERE id_game = ?`,
       [nama_game, deskripsi, id]
     );
     res.json({ message: "Game diupdate" });
@@ -46,7 +46,7 @@ exports.remove = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await db.execute(`DELETE FROM Game WHERE id_game = ?`, [id]);
+    await db.execute(`DELETE FROM game WHERE id_game = ?`, [id]);
     res.json({ message: "Game dihapus" });
   } catch (err) {
     res.status(500).json({ message: "Gagal hapus game" });
