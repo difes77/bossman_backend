@@ -10,7 +10,7 @@ const create = async (req, res) => {
   try {
     // 1. Insert header transaksi
     const [resultHeader] = await conn.execute(
-      `INSERT INTO Transaksi_Makanan (id_karyawan, id_cabang, total_harga)
+      `INSERT INTO transaksi_makanan (id_karyawan, id_cabang, total_harga)
        VALUES (?, ?, ?)`,
       [id_karyawan, id_cabang, total_harga]
     );
@@ -20,7 +20,7 @@ const create = async (req, res) => {
     // 2. Insert detail & auto-deduct stok
     for (const item of items) {
       await conn.execute(
-        `INSERT INTO Detail_Transaksi_Makanan 
+        `INSERT INTO detail_transaksi_makanan 
          (id_transaksi_makanan, id_makanan, jumlah, harga_satuan, subtotal)
          VALUES (?, ?, ?, ?, ?)`,
         [
@@ -35,8 +35,8 @@ const create = async (req, res) => {
       // 🔥 AUTO-DEDUCT: Ambil resep
       const [resep] = await conn.execute(
         `SELECT r.id_bahan_baku, r.jumlah_dibutuhkan, b.nama_bahan_baku
-         FROM Resep_Makanan r
-         JOIN Bahan_Baku b ON r.id_bahan_baku = b.id_bahan_baku
+         FROM resep_makanan r
+         JOIN bahan_baku b ON r.id_bahan_baku = b.id_bahan_baku
          WHERE r.id_makanan = ? AND b.id_cabang = ?`,
         [item.id_makanan, id_cabang]
       );
@@ -46,14 +46,14 @@ const create = async (req, res) => {
         const jumlahDikurangi = bahan.jumlah_dibutuhkan * item.jumlah;
 
         await conn.execute(
-          `UPDATE Bahan_Baku SET jumlah_stok = jumlah_stok - ?
+          `UPDATE bahan_baku SET jumlah_stok = jumlah_stok - ?
            WHERE id_bahan_baku = ?`,
           [jumlahDikurangi, bahan.id_bahan_baku]
         );
 
         // Catat ke riwayat penggunaan
         await conn.execute(
-          `INSERT INTO Penggunaan_Bahan_Baku 
+          `INSERT INTO penggunaan_bahan_baku 
            (id_karyawan, id_bahan_baku, jumlah_digunakan, keterangan, id_cabang)
            VALUES (?, ?, ?, ?, ?)`,
           [
