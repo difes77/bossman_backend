@@ -29,7 +29,7 @@ const getSummary = async (req, res) => {
         COUNT(*) AS jumlah,
         SUM(durasi_menit) AS total_durasi,
         SUM(CASE WHEN status_sewa = 'completed' THEN total_harga ELSE 0 END) AS pendapatan
-       FROM Sewa_Ditempat
+       FROM sewa_ditempat
        WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) = ? ${whereCabang}`,
       params
     );
@@ -37,7 +37,7 @@ const getSummary = async (req, res) => {
     // Query 2: Sewa Bawa Pulang - JUMLAH (disetujui hari ini)
     const [sewaBawaPulangDisetujui] = await db.execute(
       `SELECT COUNT(*) AS jumlah
-       FROM Sewa_Dibawa_Pulang
+       FROM sewa_dibawa_pulang
        WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ? 
        AND status_sewa = 'disetujui' ${whereCabang}`,
       params
@@ -46,7 +46,7 @@ const getSummary = async (req, res) => {
     // Query 3: Sewa Bawa Pulang - JUMLAH (dikembalikan hari ini)
     const [sewaBawaPulangDikembalikan] = await db.execute(
       `SELECT COUNT(*) AS jumlah
-       FROM Sewa_Dibawa_Pulang
+       FROM sewa_dibawa_pulang
        WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) = ? 
        AND status_sewa = 'dikembalikan' ${whereCabang}`,
       params
@@ -55,7 +55,7 @@ const getSummary = async (req, res) => {
     // Query 4: Pendapatan Sewa Bawa Pulang (hanya dari yang dikembalikan, gunakan total_akhir)
     const [pendapatanSewaBawaPulang] = await db.execute(
       `SELECT IFNULL(SUM(total_akhir), 0) AS pendapatan
-       FROM Sewa_Dibawa_Pulang
+       FROM sewa_dibawa_pulang
        WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) = ? 
        AND status_sewa = 'dikembalikan' ${whereCabang}`,
       params
@@ -64,7 +64,7 @@ const getSummary = async (req, res) => {
     // Query 5: Transaksi Makanan (tidak berubah)
     const [transMakanan] = await db.execute(
       `SELECT COUNT(*) AS jumlah, SUM(total_harga) AS pendapatan
-       FROM Transaksi_Makanan
+       FROM transaksi_makanan
        WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ? ${whereCabang}`,
       params
     );
@@ -72,7 +72,7 @@ const getSummary = async (req, res) => {
     // Query 6: Permintaan Sewa (tidak berubah)
     const [permintaanSewa] = await db.execute(
       `SELECT COUNT(*) AS jumlah
-       FROM Sewa_Dibawa_Pulang
+       FROM sewa_dibawa_pulang
        WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ? 
        AND status_sewa = 'menunggu persetujuan admin' ${whereCabang}`,
       params
@@ -81,7 +81,7 @@ const getSummary = async (req, res) => {
     // Query 7: Penolakan Sewa (tidak berubah)
     const [penolakanSewa] = await db.execute(
       `SELECT COUNT(*) AS jumlah
-       FROM Sewa_Dibawa_Pulang
+       FROM sewa_dibawa_pulang
        WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) = ? 
        AND status_sewa = 'ditolak' ${whereCabang}`,
       params
@@ -158,13 +158,13 @@ const getPendapatanByDateRange = async (req, res) => {
         SUM(makanan) as makanan,
         SUM(sewa_ditempat + sewa_bawa_pulang + makanan) as total
       FROM (
-        -- Sewa Ditempat
+        -- sewa ditempat
         SELECT 
           DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) AS tanggal,
           SUM(CASE WHEN status_sewa = 'completed' THEN total_harga ELSE 0 END) AS sewa_ditempat,
           0 AS sewa_bawa_pulang,
           0 AS makanan
-        FROM Sewa_Ditempat
+        FROM sewa_ditempat
         WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ? ${whereCabang}
         GROUP BY DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00'))
         
@@ -176,7 +176,7 @@ const getPendapatanByDateRange = async (req, res) => {
           0 AS sewa_ditempat,
           SUM(total_akhir) AS sewa_bawa_pulang,
           0 AS makanan
-        FROM Sewa_Dibawa_Pulang
+        FROM sewa_dibawa_pulang
         WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ? 
           AND status_sewa = 'dikembalikan' ${whereCabang}
         GROUP BY DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00'))
@@ -189,7 +189,7 @@ const getPendapatanByDateRange = async (req, res) => {
           0 AS sewa_ditempat,
           0 AS sewa_bawa_pulang,
           SUM(total_harga) AS makanan
-        FROM Transaksi_Makanan
+        FROM transaksi_makanan
         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? ${whereCabang}
         GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+07:00'))
       ) AS combined
@@ -250,7 +250,7 @@ const getPendapatanHarian = async (req, res) => {
           SUM(CASE WHEN status_sewa = 'completed' THEN total_harga ELSE 0 END) AS sewa_ditempat,
           0 AS sewa_bawa_pulang,
           0 AS makanan
-        FROM Sewa_Ditempat
+        FROM sewa_ditempat
         WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) >= CURDATE() - INTERVAL 6 DAY
           ${id_cabang ? "AND id_cabang = ?" : ""}
         GROUP BY DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00'))
@@ -262,7 +262,7 @@ const getPendapatanHarian = async (req, res) => {
           0 AS sewa_ditempat,
           SUM(total_akhir) AS sewa_bawa_pulang,
           0 AS makanan
-        FROM Sewa_Dibawa_Pulang
+        FROM sewa_dibawa_pulang
         WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) >= CURDATE() - INTERVAL 6 DAY
           AND status_sewa = 'dikembalikan'
           ${id_cabang ? "AND id_cabang = ?" : ""}
@@ -275,7 +275,7 @@ const getPendapatanHarian = async (req, res) => {
           0 AS sewa_ditempat,
           0 AS sewa_bawa_pulang,
           SUM(total_harga) AS makanan
-        FROM Transaksi_Makanan
+        FROM transaksi_makanan
         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) >= CURDATE() - INTERVAL 6 DAY
           ${id_cabang ? "AND id_cabang = ?" : ""}
         GROUP BY DATE(CONVERT_TZ(created_at, '+00:00', '+07:00'))
@@ -322,17 +322,17 @@ const getPendapatanMingguan = async (req, res) => {
         SUM(CASE WHEN sumber = 'makanan' THEN total ELSE 0 END) AS makanan
       FROM (
         SELECT total_harga AS total, 'sewa' AS sumber, waktu_mulai as created_at, id_cabang
-        FROM Sewa_Ditempat WHERE status_sewa = 'completed'
+        FROM sewa_ditempat WHERE status_sewa = 'completed'
 
         UNION ALL
 
         SELECT total_akhir AS total, 'sewa_pulang' AS sumber, tanggal_pengembalian as created_at, id_cabang
-        FROM Sewa_Dibawa_Pulang WHERE status_sewa = 'dikembalikan'
+        FROM sewa_dibawa_pulang WHERE status_sewa = 'dikembalikan'
 
         UNION ALL
 
         SELECT total_harga AS total, 'makanan' AS sumber, created_at, id_cabang
-        FROM Transaksi_Makanan
+        FROM transaksi_makanan
       ) AS combined
       ${whereClause}
       GROUP BY minggu
@@ -376,17 +376,17 @@ const getPendapatanBulanan = async (req, res) => {
         SUM(CASE WHEN sumber = 'makanan' THEN total ELSE 0 END) AS makanan
       FROM (
         SELECT total_harga AS total, 'sewa' AS sumber, waktu_mulai as created_at, id_cabang
-        FROM Sewa_Ditempat WHERE status_sewa = 'completed'
+        FROM sewa_ditempat WHERE status_sewa = 'completed'
 
         UNION ALL
 
         SELECT total_akhir AS total, 'sewa_pulang' AS sumber, tanggal_pengembalian as created_at, id_cabang
-        FROM Sewa_Dibawa_Pulang WHERE status_sewa = 'dikembalikan'
+        FROM sewa_dibawa_pulang WHERE status_sewa = 'dikembalikan'
 
         UNION ALL
 
         SELECT total_harga AS total, 'makanan' AS sumber, created_at, id_cabang
-        FROM Transaksi_Makanan
+        FROM transaksi_makanan
       ) AS combined
       ${whereClause}
       GROUP BY bulan
@@ -415,13 +415,13 @@ const getPendapatanTahunan = async (req, res) => {
         SUM(CASE WHEN sumber = 'makanan' THEN total ELSE 0 END) AS makanan
       FROM (
         SELECT total_harga AS total, 'sewa' AS sumber, waktu_mulai as created_at
-        FROM Sewa_Ditempat
+        FROM sewa_ditempat
         WHERE status_sewa = 'completed' ${id_cabang ? "AND id_cabang = ?" : ""}
 
         UNION ALL
 
         SELECT total_akhir AS total, 'sewa_pulang' AS sumber, tanggal_pengembalian as created_at
-        FROM Sewa_Dibawa_Pulang
+        FROM sewa_dibawa_pulang
         WHERE status_sewa = 'dikembalikan' ${
           id_cabang ? "AND id_cabang = ?" : ""
         }
@@ -429,7 +429,7 @@ const getPendapatanTahunan = async (req, res) => {
         UNION ALL
 
         SELECT total_harga AS total, 'makanan' AS sumber, created_at
-        FROM Transaksi_Makanan
+        FROM transaksi_makanan
         ${id_cabang ? "WHERE id_cabang = ?" : ""}
       ) AS combined
       GROUP BY tahun
@@ -468,7 +468,7 @@ const exportPDF = async (req, res) => {
     console.log("🔍 Fetching cabang info...");
 
     const [cabangResult] = await db.execute(
-      `SELECT nama_cabang, alamat FROM Cabang WHERE id_cabang = ?`,
+      `SELECT nama_cabang, alamat FROM cabang WHERE id_cabang = ?`,
       [id_cabang]
     );
 
@@ -484,43 +484,43 @@ const exportPDF = async (req, res) => {
     // Query 1: Ringkasan TOTAL - FIXED
     const [summaryResult] = await db.execute(
       `SELECT
-        (SELECT COUNT(*) FROM Sewa_Ditempat 
+        (SELECT COUNT(*) FROM sewa_ditempat 
          WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ?) AS jumlahSewaDitempat,
         
-        (SELECT COUNT(*) FROM Sewa_Dibawa_Pulang 
+        (SELECT COUNT(*) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'disetujui') AS jumlahSewaBawaPulangDisetujui,
         
-        (SELECT COUNT(*) FROM Sewa_Dibawa_Pulang 
+        (SELECT COUNT(*) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'dikembalikan') AS jumlahSewaBawaPulangDikembalikan,
         
-        (SELECT COUNT(*) FROM Transaksi_Makanan 
+        (SELECT COUNT(*) FROM transaksi_makanan 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ?) AS jumlahTransaksiMakanan,
         
-        (SELECT IFNULL(SUM(durasi_menit),0)/60 FROM Sewa_Ditempat 
+        (SELECT IFNULL(SUM(durasi_menit),0)/60 FROM sewa_ditempat 
          WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ?) AS totalJamSewa,
         
-        (SELECT IFNULL(SUM(total_harga),0) FROM Sewa_Ditempat 
+        (SELECT IFNULL(SUM(total_harga),0) FROM sewa_ditempat 
          WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'completed') AS pendapatanSewa,
         
-        (SELECT IFNULL(SUM(total_harga),0) FROM Transaksi_Makanan 
+        (SELECT IFNULL(SUM(total_harga),0) FROM transaksi_makanan 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ?) AS pendapatanMakanan,
          
-        (SELECT COUNT(*) FROM Sewa_Dibawa_Pulang 
+        (SELECT COUNT(*) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'menunggu persetujuan admin') AS jumlahPermintaanSewa,
          
-        (SELECT COUNT(*) FROM Sewa_Dibawa_Pulang 
+        (SELECT COUNT(*) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'ditolak') AS jumlahPenolakanSewa,
         
-        (SELECT IFNULL(SUM(denda_keterlambatan),0) FROM Sewa_Dibawa_Pulang 
+        (SELECT IFNULL(SUM(denda_keterlambatan),0) FROM sewa_dibawa_dulang 
          WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'dikembalikan') AS totalDendaKeterlambatan,
         
-        (SELECT IFNULL(SUM(total_akhir),0) FROM Sewa_Dibawa_Pulang 
+        (SELECT IFNULL(SUM(total_akhir),0) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'dikembalikan') AS pendapatanSewaBawaPulang,
         
-        (SELECT IFNULL(SUM(nominal_diskon),0) FROM Sewa_Ditempat 
+        (SELECT IFNULL(SUM(nominal_diskon),0) FROM sewa_ditempat 
          WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'completed') AS totalDiskonDitempat,
         
-        (SELECT IFNULL(SUM(nominal_diskon),0) FROM Sewa_Dibawa_Pulang 
+        (SELECT IFNULL(SUM(nominal_diskon),0) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ?) AS totalDiskonBawaPulang
       `,
       [
@@ -604,25 +604,25 @@ const exportPDF = async (req, res) => {
         SUM(CASE WHEN combined.sumber IN ('sewa_ditempat', 'sewa_bawa_pulang_return', 'transaksi_makanan') THEN combined.total ELSE 0 END) as total_pendapatan
       FROM (
         SELECT waktu_mulai as created_at, total_harga as total, 'sewa_ditempat' as sumber
-        FROM Sewa_Ditempat
+        FROM sewa_ditempat
         WHERE DATE(CONVERT_TZ(waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'completed'
         
         UNION ALL
         
         SELECT created_at, 0 as total, 'sewa_bawa_pulang_disetujui' as sumber
-        FROM Sewa_Dibawa_Pulang
+        FROM sewa_dibawa_pulang
         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'disetujui'
         
         UNION ALL
         
         SELECT tanggal_pengembalian as created_at, total_akhir as total, 'sewa_bawa_pulang_return' as sumber
-        FROM Sewa_Dibawa_Pulang
+        FROM sewa_dibawa_pulang
         WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'dikembalikan'
         
         UNION ALL
         
         SELECT created_at, total_harga as total, 'transaksi_makanan' as sumber
-        FROM Transaksi_Makanan
+        FROM transaksi_makanan
         WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ?
       ) as combined
       GROUP BY DATE(CONVERT_TZ(combined.created_at, '+00:00', '+07:00'))
@@ -651,9 +651,9 @@ const exportPDF = async (req, res) => {
         m.nama_makanan,
         SUM(dtm.jumlah) as total_terjual,
         SUM(dtm.subtotal) as total_pendapatan
-      FROM Detail_Transaksi_Makanan dtm
-      JOIN Transaksi_Makanan tm ON dtm.id_transaksi_makanan = tm.id_transaksi_makanan
-      JOIN Makanan m ON dtm.id_makanan = m.id_makanan
+      FROM detail_transaksi_makanan dtm
+      JOIN transaksi_makanan tm ON dtm.id_transaksi_makanan = tm.id_transaksi_makanan
+      JOIN makanan m ON dtm.id_makanan = m.id_makanan
       WHERE DATE(CONVERT_TZ(tm.created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND tm.id_cabang = ?
       GROUP BY m.id_makanan, m.nama_makanan
       ORDER BY total_terjual DESC
@@ -669,11 +669,11 @@ const exportPDF = async (req, res) => {
         IFNULL(SUM(CASE WHEN sd.status_sewa = 'completed' THEN sd.durasi_menit ELSE 0 END)/60, 0) as total_jam_sewa,
         IFNULL(SUM(CASE WHEN sd.status_sewa = 'completed' THEN sd.total_harga ELSE 0 END), 0) as pendapatan_ditempat,
         COUNT(DISTINCT CASE WHEN sbp.status_sewa = 'dikembalikan' THEN sbp.id_sewa_bawa_pulang END) as jumlah_sewa_pulang
-      FROM Jenis_PS jp
-      LEFT JOIN PS p ON jp.id_jenis_ps = p.id_jenis_ps AND p.id_cabang = ?
-      LEFT JOIN Sewa_Ditempat sd ON p.id_ps = sd.id_ps 
+      FROM jenis_ps jp
+      LEFT JOIN ps p ON jp.id_jenis_ps = p.id_jenis_ps AND p.id_cabang = ?
+      LEFT JOIN sewa_ditempat sd ON p.id_ps = sd.id_ps 
         AND DATE(CONVERT_TZ(sd.waktu_mulai, '+00:00', '+07:00')) BETWEEN ? AND ?
-      LEFT JOIN Sewa_Dibawa_Pulang sbp ON p.id_ps = sbp.id_ps 
+      LEFT JOIN sewa_dibawa_pulang sbp ON p.id_ps = sbp.id_ps 
         AND DATE(CONVERT_TZ(sbp.tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ?
         AND sbp.status_sewa = 'dikembalikan'
       GROUP BY jp.id_jenis_ps, jp.nama_jenis
