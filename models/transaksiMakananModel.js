@@ -2,7 +2,7 @@ const db = require("../config/db");
 
 const createTransaksi = async ({ id_karyawan, id_cabang, total_harga }) => {
   const [result] = await db.execute(
-    `INSERT INTO Transaksi_Makanan (id_karyawan, id_cabang, total_harga) VALUES (?, ?, ?)`,
+    `INSERT INTO transaksi_makanan (id_karyawan, id_cabang, total_harga) VALUES (?, ?, ?)`,
     [id_karyawan, id_cabang, total_harga]
   );
   return result.insertId;
@@ -12,7 +12,7 @@ const createDetail = async (idTransaksi, items) => {
   for (const item of items) {
     const { id_makanan, jumlah, harga_satuan, subtotal } = item;
     await db.execute(
-      `INSERT INTO Detail_Transaksi_Makanan 
+      `INSERT INTO detail_transaksi_makanan 
       (id_transaksi_makanan, id_makanan, jumlah, harga_satuan, subtotal)
       VALUES (?, ?, ?, ?, ?)`,
       [idTransaksi, id_makanan, jumlah, harga_satuan, subtotal]
@@ -21,7 +21,7 @@ const createDetail = async (idTransaksi, items) => {
 };
 
 const getAll = async ({ tanggal_awal, tanggal_akhir, id_cabang }) => {
-  let query = `SELECT * FROM Transaksi_Makanan WHERE 1`;
+  let query = `SELECT * FROM transaksi_makanan WHERE 1`;
   const params = [];
 
   if (tanggal_awal) {
@@ -46,8 +46,8 @@ const getAll = async ({ tanggal_awal, tanggal_akhir, id_cabang }) => {
 const getDetail = async (idTransaksi) => {
   const [rows] = await db.execute(
     `SELECT dm.*, m.nama_makanan 
-     FROM Detail_Transaksi_Makanan dm
-     JOIN Makanan m ON dm.id_makanan = m.id_makanan
+     FROM detail_transaksi_makanan dm
+     JOIN makanan m ON dm.id_makanan = m.id_makanan
      WHERE dm.id_transaksi_makanan = ?`,
     [idTransaksi]
   );
@@ -65,10 +65,10 @@ const getByTanggal = async ({ tanggal, id_cabang }) => {
       dm.jumlah,
       dm.harga_satuan,
       dm.subtotal
-    FROM Transaksi_Makanan tm
-    JOIN Karyawan k ON tm.id_karyawan = k.id_karyawan
-    JOIN Detail_Transaksi_Makanan dm ON tm.id_transaksi_makanan = dm.id_transaksi_makanan
-    JOIN Makanan m ON dm.id_makanan = m.id_makanan
+    FROM transaksi_makanan tm
+    JOIN karyawan k ON tm.id_karyawan = k.id_karyawan
+    JOIN detail_transaksi_makanan dm ON tm.id_transaksi_makanan = dm.id_transaksi_makanan
+    JOIN makanan m ON dm.id_makanan = m.id_makanan
     WHERE DATE(tm.created_at) = ?
       AND tm.id_cabang = ?
     ORDER BY tm.created_at DESC
