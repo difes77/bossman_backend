@@ -2,7 +2,7 @@ const db = require("../config/db");
 
 const createSewaDitempat = async (data) => {
   const sql = `
-    INSERT INTO Sewa_Ditempat 
+    INSERT INTO sewa_ditempat 
     (id_ps, id_karyawan, nama_penyewa, waktu_mulai, durasi_menit, waktu_selesai_estimasi, total_harga, diskon_persen, nominal_diskon, total_biaya, id_cabang)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
@@ -32,7 +32,7 @@ const createSewaDitempat = async (data) => {
 
 const completeSewaDitempat = async (id_sewa_ditempat) => {
   const sql = `
-    UPDATE Sewa_Ditempat 
+    UPDATE sewa_ditempat 
     SET status_sewa = 'completed',
         waktu_selesai_aktual = NOW()
     WHERE id_sewa_ditempat = ? AND status_sewa = 'active'
@@ -54,7 +54,7 @@ const getActiveSewaByPs = async (id_ps) => {
       id_sewa_ditempat, id_ps, id_karyawan, nama_penyewa,
       waktu_mulai, durasi_menit, waktu_selesai_estimasi, 
       total_harga, status_sewa, id_cabang
-    FROM Sewa_Ditempat
+    FROM sewa_ditempat
     WHERE id_ps = ? AND status_sewa = 'active'
     LIMIT 1
   `;
