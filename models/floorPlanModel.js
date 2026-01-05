@@ -1,7 +1,7 @@
 const db = require("../config/db");
 
 const getConsoleById = (id_ps) => {
-  const sql = `SELECT * FROM PS WHERE id_ps = ?`;
+  const sql = `SELECT * FROM ps WHERE id_ps = ?`;
   return db.query(sql, [id_ps]);
 };
 
@@ -12,7 +12,7 @@ const getActiveRentalByConsole = (id_ps) => {
            nama_penyewa,
            waktu_selesai_estimasi,
            NULL AS tanggal_kembali
-    FROM Sewa_Ditempat
+    FROM sewa_ditempat
     WHERE id_ps = ? AND status_sewa = 'active'
     
     UNION
@@ -21,7 +21,7 @@ const getActiveRentalByConsole = (id_ps) => {
            nama_penyewa,
            NULL AS waktu_selesai_estimasi,
            tanggal_kembali
-    FROM Sewa_Dibawa_Pulang
+    FROM sewa_dibawa_pulang
     WHERE id_ps = ? AND status_sewa = 'disetujui'
     LIMIT 1
     `,
@@ -30,7 +30,7 @@ const getActiveRentalByConsole = (id_ps) => {
 };
 
 const updateConsoleStatus = (id_ps, status_fisik) => {
-  const sql = `UPDATE PS SET status_fisik = ? WHERE id_ps = ?`;
+  const sql = `UPDATE ps SET status_fisik = ? WHERE id_ps = ?`;
   return db.query(sql, [status_fisik, id_ps]);
 };
 const getConsolesByBranch = (id_cabang) => {
@@ -43,8 +43,8 @@ const getConsolesByBranch = (id_cabang) => {
       jp.harga_per_jam,
       jp.nama_jenis,
       ps.id_jenis_ps
-    FROM PS ps
-    JOIN Jenis_PS jp ON ps.id_jenis_ps = jp.id_jenis_ps
+    FROM ps ps
+    JOIN jenis_ps jp ON ps.id_jenis_ps = jp.id_jenis_ps
     WHERE ps.id_cabang = ?
     ORDER BY ps.id_ps ASC;
   `;
