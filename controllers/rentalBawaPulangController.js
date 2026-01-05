@@ -73,7 +73,7 @@ const createRental = async (req, res) => {
 
     // Cek status PS
     const [[psData]] = await db.execute(
-      "SELECT status_fisik, nomor_ps FROM PS WHERE id_ps = ?",
+      "SELECT status_fisik, nomor_ps FROM ps WHERE id_ps = ?",
       [data.id_ps]
     );
 
@@ -203,13 +203,13 @@ const setujuiSewa = async (req, res) => {
 
     // Get PS info
     const [[psData]] = await db.execute(
-      "SELECT nomor_ps FROM PS WHERE id_ps = ?",
+      "SELECT nomor_ps FROM ps WHERE id_ps = ?",
       [rental.id_ps]
     );
 
     // Update status PS
     await db.execute(
-      "UPDATE PS SET status_fisik = 'borrowed_out', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
+      "UPDATE ps SET status_fisik = 'borrowed_out', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
       [rental.id_ps]
     );
 
@@ -292,13 +292,13 @@ const tolakSewa = async (req, res) => {
 
     // Get PS info
     const [[psData]] = await db.execute(
-      "SELECT nomor_ps FROM PS WHERE id_ps = ?",
+      "SELECT nomor_ps FROM ps WHERE id_ps = ?",
       [rental.id_ps]
     );
 
     // Update status PS menjadi available
     await db.execute(
-      "UPDATE PS SET status_fisik = 'available', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
+      "UPDATE ps SET status_fisik = 'available', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
       [rental.id_ps]
     );
 
@@ -306,7 +306,7 @@ const tolakSewa = async (req, res) => {
     let karyawan = null;
     if (rental.id_karyawan) {
       const [karyawanRows] = await db.execute(
-        "SELECT nama_karyawan, no_wa FROM KARYAWAN WHERE id_karyawan = ?",
+        "SELECT nama_karyawan, no_wa FROM karyawan WHERE id_karyawan = ?",
         [rental.id_karyawan]
       );
       karyawan = karyawanRows[0];
@@ -316,7 +316,7 @@ const tolakSewa = async (req, res) => {
     let cabang = null;
     if (rental.id_cabang) {
       const [cabangRows] = await db.execute(
-        "SELECT nama_cabang FROM CABANG WHERE id_cabang = ?",
+        "SELECT nama_cabang FROM cabang WHERE id_cabang = ?",
         [rental.id_cabang]
       );
       cabang = cabangRows[0];
@@ -400,7 +400,7 @@ const completeSewa = async (req, res) => {
 
     // Get PS info
     const [[psData]] = await db.execute(
-      "SELECT nomor_ps FROM PS WHERE id_ps = ?",
+      "SELECT nomor_ps FROM ps WHERE id_ps = ?",
       [rental.id_ps]
     );
 
@@ -421,7 +421,7 @@ const completeSewa = async (req, res) => {
 
     // Update status PS ke available
     await db.execute(
-      "UPDATE PS SET status_fisik = 'available', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
+      "UPDATE ps SET status_fisik = 'available', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
       [rental.id_ps]
     );
 
@@ -467,7 +467,7 @@ const kembalikanSewa = async (req, res) => {
     const rental = await rentalModel.getRentalById(id);
     if (rental) {
       await db.execute(
-        "UPDATE PS SET status_fisik = 'available', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
+        "UPDATE ps SET status_fisik = 'available', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
         [rental.id_ps]
       );
 
