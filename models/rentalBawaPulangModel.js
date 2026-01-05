@@ -20,7 +20,7 @@ exports.createRental = async (data) => {
   } = data;
 
   const query = `
-    INSERT INTO Sewa_Dibawa_Pulang
+    INSERT INTO sewa_dibawa_pulang
     (
       id_ps, id_karyawan, nama_penyewa, alamat_penyewa, no_telp_penyewa,
       foto_orang, foto_identitas_jaminan, total_harga_sewa, id_cabang,
@@ -60,7 +60,7 @@ exports.createRental = async (data) => {
 // ✅ UPDATE STATUS
 exports.updateStatus = async (id, status) => {
   const query = `
-    UPDATE Sewa_Dibawa_Pulang
+    UPDATE sewa_dibawa_pulang
     SET status_sewa = ?, updated_at = CURRENT_TIMESTAMP
     WHERE id_sewa_bawa_pulang = ?
   `;
@@ -71,7 +71,7 @@ exports.updateStatus = async (id, status) => {
 // ✅ GET ACTIVE RENTAL BY CONSOLE ID
 exports.getActiveRentalByConsoleId = async (id_ps) => {
   const query = `
-    SELECT * FROM Sewa_Dibawa_Pulang
+    SELECT * FROM sewa_dibawa_pulang
     WHERE id_ps = ? AND status_sewa IN ('menunggu persetujuan admin', 'disetujui')
     ORDER BY created_at DESC LIMIT 1
   `;
@@ -82,7 +82,7 @@ exports.getActiveRentalByConsoleId = async (id_ps) => {
 // ✅ GET RENTAL BY ID
 exports.getRentalById = async (id) => {
   const query = `
-    SELECT * FROM Sewa_Dibawa_Pulang
+    SELECT * FROM sewa_dibawa_pulang
     WHERE id_sewa_bawa_pulang = ?
   `;
   const [rows] = await db.execute(query, [id]);
@@ -93,10 +93,10 @@ exports.getRentalById = async (id) => {
 exports.getRentalsByStatusAndBranch = async (status, id_cabang) => {
   let query = `
     SELECT s.*, ps.nama_ps, k.nama_karyawan, c.nama_cabang
-    FROM Sewa_Dibawa_Pulang s
-    JOIN PS ps ON s.id_ps = ps.id_ps
-    JOIN Karyawan k ON s.id_karyawan = k.id_karyawan
-    JOIN Cabang c ON s.id_cabang = c.id_cabang
+    FROM sewa_dibawa_pulang s
+    JOIN ps ps ON s.id_ps = ps.id_ps
+    JOIN karyawan k ON s.id_karyawan = k.id_karyawan
+    JOIN cabang c ON s.id_cabang = c.id_cabang
     WHERE s.status_sewa = ?
   `;
   const params = [status];
@@ -115,7 +115,7 @@ exports.getRentalsByStatusAndBranch = async (status, id_cabang) => {
 // ✅ GET SEWA BY ID (untuk completeSewa)
 exports.getSewaById = async (id) => {
   const query = `
-    SELECT * FROM Sewa_Dibawa_Pulang
+    SELECT * FROM sewa_dibawa_pulang
     WHERE id_sewa_bawa_pulang = ?
   `;
   return await db.execute(query, [id]);
@@ -129,7 +129,7 @@ exports.completeSewa = async (
   total_akhir
 ) => {
   const query = `
-    UPDATE Sewa_Dibawa_Pulang
+    UPDATE sewa_dibawa_pulang
     SET 
       status_sewa = 'dikembalikan',
       tanggal_pengembalian = NOW(),
@@ -150,7 +150,7 @@ exports.completeSewa = async (
 // ✅ UPDATE FOTO BUKTI
 exports.updateFotoBukti = async (id_sewa, foto_bukti_1, foto_bukti_2) => {
   const query = `
-    UPDATE Sewa_Dibawa_Pulang
+    UPDATE sewa_dibawa_pulang
     SET 
       foto_bukti_pengembalian_1 = ?,
       foto_bukti_pengembalian_2 = ?,
@@ -178,9 +178,9 @@ exports.getApprovedRentalsByBranch = async (id_cabang) => {
       ps.nomor_ps,
       jp.nama_jenis,
       jp.harga_per_jam
-    FROM Sewa_Dibawa_Pulang sbp
-    JOIN PS ps ON sbp.id_ps = ps.id_ps
-    JOIN Jenis_PS jp ON ps.id_jenis_ps = jp.id_jenis_ps
+    FROM sewa_dibawa_pulang sbp
+    JOIN ps ps ON sbp.id_ps = ps.id_ps
+    JOIN jenis_ps jp ON ps.id_jenis_ps = jp.id_jenis_ps
     WHERE sbp.id_cabang = ?
       AND sbp.status_sewa = 'disetujui'
     ORDER BY sbp.tanggal_kembali ASC
