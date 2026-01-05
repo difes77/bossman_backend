@@ -3,7 +3,7 @@ const db = require("../config/db");
 exports.getAll = async (req, res) => {
   try {
     const [rows] = await db.execute(
-      `SELECT * FROM Jenis_PS ORDER BY created_at DESC`
+      `SELECT * FROM jenis_ps ORDER BY created_at DESC`
     );
     res.json(rows);
   } catch (err) {
@@ -18,7 +18,7 @@ exports.create = async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO Jenis_PS (nama_jenis, harga_per_jam) VALUES (?, ?)`,
+      `INSERT INTO jenis_ps (nama_jenis, harga_per_jam) VALUES (?, ?)`,
       [nama_jenis, harga_per_jam]
     );
     res
@@ -35,7 +35,7 @@ exports.update = async (req, res) => {
 
   try {
     await db.execute(
-      `UPDATE Jenis_PS SET nama_jenis = ?, harga_per_jam = ? WHERE id_jenis_ps = ?`,
+      `UPDATE jenis_ps SET nama_jenis = ?, harga_per_jam = ? WHERE id_jenis_ps = ?`,
       [nama_jenis, harga_per_jam, id]
     );
     res.json({ message: "Jenis PS diupdate" });
@@ -48,7 +48,7 @@ exports.remove = async (req, res) => {
   const { id } = req.params;
 
   try {
-    await db.execute(`DELETE FROM Jenis_PS WHERE id_jenis_ps = ?`, [id]);
+    await db.execute(`DELETE FROM jenis_ps WHERE id_jenis_ps = ?`, [id]);
     res.json({ message: "Jenis PS dihapus" });
   } catch (err) {
     res.status(500).json({ message: "Gagal hapus jenis PS" });
