@@ -2,7 +2,7 @@ const db = require("../config/db");
 
 // Get only active cabang
 const getAll = async (includeInactive = false) => {
-  let query = `SELECT * FROM Cabang`;
+  let query = `SELECT * FROM cabang`;
 
   if (!includeInactive) {
     query += ` WHERE status = 'aktif'`;
@@ -16,14 +16,14 @@ const getAll = async (includeInactive = false) => {
 
 const create = async ({ nama_cabang, alamat }) => {
   const [result] = await db.execute(
-    `INSERT INTO Cabang (nama_cabang, alamat, status) VALUES (?, ?, 'aktif')`,
+    `INSERT INTO cabang (nama_cabang, alamat, status) VALUES (?, ?, 'aktif')`,
     [nama_cabang, alamat]
   );
   return result;
 };
 
 const update = async (id, { nama_cabang, alamat, status }) => {
-  let query = "UPDATE Cabang SET ";
+  let query = "UPDATE cabang SET ";
   let params = [];
   let updates = [];
 
@@ -53,7 +53,7 @@ const update = async (id, { nama_cabang, alamat, status }) => {
 // Soft delete - ubah status jadi nonaktif
 const softDelete = async (id) => {
   await db.execute(
-    `UPDATE Cabang SET status = 'nonaktif' WHERE id_cabang = ?`,
+    `UPDATE cabang SET status = 'nonaktif' WHERE id_cabang = ?`,
     [id]
   );
 };
