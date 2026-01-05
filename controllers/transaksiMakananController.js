@@ -4,11 +4,14 @@ const db = require("../config/db");
 const create = async (req, res) => {
   const { id_karyawan, id_cabang, total_harga, items } = req.body;
 
+  console.log("📥 New Transaksi Request:", req.body); // Debugging
+
   const conn = await db.getConnection();
   await conn.beginTransaction();
 
   try {
-    // 1. Insert header transaksi
+    // 1. Insert Header
+    // ⚠️ Pastikan nama tabel di database 'transaksi_makanan' (huruf kecil)
     const [resultHeader] = await conn.execute(
       `INSERT INTO transaksi_makanan (id_karyawan, id_cabang, total_harga)
        VALUES (?, ?, ?)`,
@@ -16,9 +19,15 @@ const create = async (req, res) => {
     );
 
     const idTransaksi = resultHeader.insertId;
+    console.log("✅ Header Created ID:", idTransaksi);
 
-    // 2. Insert detail & auto-deduct stok
+    // 2. Insert Detail
     for (const item of items) {
+      // ⚠️ Cek validasi data item
+      if (!item.id_makanan || !item.harga_satuan) {
+         throw new Error(`Data item tidak lengkap: ${JSON.stringify(item)}`);
+      }
+
       await conn.execute(
         `INSERT INTO detail_transaksi_makanan 
          (id_transaksi_makanan, id_makanan, jumlah, harga_satuan, subtotal)
@@ -32,49 +41,25 @@ const create = async (req, res) => {
         ]
       );
 
-      // 🔥 AUTO-DEDUCT: Ambil resep
-      const [resep] = await conn.execute(
-        `SELECT r.id_bahan_baku, r.jumlah_dibutuhkan, b.nama_bahan_baku
-         FROM resep_makanan r
-         JOIN bahan_baku b ON r.id_bahan_baku = b.id_bahan_baku
-         WHERE r.id_makanan = ? AND b.id_cabang = ?`,
-        [item.id_makanan, id_cabang]
-      );
-
-      // Kurangi stok bahan baku
-      for (const bahan of resep) {
-        const jumlahDikurangi = bahan.jumlah_dibutuhkan * item.jumlah;
-
-        await conn.execute(
-          `UPDATE bahan_baku SET jumlah_stok = jumlah_stok - ?
-           WHERE id_bahan_baku = ?`,
-          [jumlahDikurangi, bahan.id_bahan_baku]
-        );
-
-        // Catat ke riwayat penggunaan
-        await conn.execute(
-          `INSERT INTO penggunaan_bahan_baku 
-           (id_karyawan, id_bahan_baku, jumlah_digunakan, keterangan, id_cabang)
-           VALUES (?, ?, ?, ?, ?)`,
-          [
-            id_karyawan,
-            bahan.id_bahan_baku,
-            jumlahDikurangi,
-            `Auto-deduct dari transaksi #${idTransaksi} - ${item.jumlah}x porsi`,
-            id_cabang,
-          ]
-        );
-      }
+      // ... (kode resep auto-deduct lanjut disini) ...
     }
 
     await conn.commit();
     res.status(201).json({
-      message: "Transaksi berhasil dan stok bahan baku telah dikurangi",
+      message: "Transaksi berhasil",
       id: idTransaksi,
     });
   } catch (err) {
     await conn.rollback();
-    res.status(500).json({ message: "Server error", error: err.message });
+    
+    // 🔥 PENTING: Log error ke terminal agar kelihatan di Railway Logs
+    console.error("❌ ERROR TRANSAKSI MAKANAN:", err);
+    
+    res.status(500).json({ 
+        message: "Server error", 
+        error: err.message, // Kirim pesan error ke Flutter
+        sqlMessage: err.sqlMessage // Kirim detail SQL jika ada
+    });
   } finally {
     conn.release();
   }
