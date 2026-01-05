@@ -24,7 +24,7 @@ const getConsoleDetail = async (req, res) => {
         harga_5_hari,
         harga_6_hari,
         harga_7_hari
-       FROM Jenis_PS 
+       FROM jenis_ps 
        WHERE id_jenis_ps = ?`,
       [consoleData.id_jenis_ps]
     );
