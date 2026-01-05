@@ -5,8 +5,8 @@ exports.getAll = async (req, res) => {
   try {
     const [rows] = await db.execute(
       `SELECT m.*, c.nama_cabang 
-       FROM Makanan m
-       LEFT JOIN Cabang c ON m.id_cabang = c.id_cabang
+       FROM makanan m
+       LEFT JOIN cabang c ON m.id_cabang = c.id_cabang
        ORDER BY m.created_at DESC`
     );
     res.json(rows);
@@ -19,7 +19,7 @@ exports.getAll = async (req, res) => {
 // ✅ GET MENU (untuk POS)
 exports.getMenu = async (req, res) => {
   const { id_cabang } = req.query;
-  let query = `SELECT id_makanan, nama_makanan, harga_jual FROM Makanan WHERE 1=1`;
+  let query = `SELECT id_makanan, nama_makanan, harga_jual FROM makanan WHERE 1=1`;
   const params = [];
 
   if (id_cabang) {
@@ -46,8 +46,8 @@ exports.getById = async (req, res) => {
     // Get makanan
     const [makanan] = await db.execute(
       `SELECT m.*, c.nama_cabang 
-       FROM Makanan m
-       LEFT JOIN Cabang c ON m.id_cabang = c.id_cabang
+       FROM makanan m
+       LEFT JOIN cabang c ON m.id_cabang = c.id_cabang
        WHERE m.id_makanan = ?`,
       [id]
     );
@@ -59,8 +59,8 @@ exports.getById = async (req, res) => {
     // Get resep
     const [resep] = await db.execute(
       `SELECT r.*, b.nama_bahan_baku, b.unit_satuan, b.jumlah_stok
-       FROM Resep r
-       JOIN Bahan_Baku b ON r.id_bahan_baku = b.id_bahan_baku
+       FROM resep r
+       JOIN bahan_baku b ON r.id_bahan_baku = b.id_bahan_baku
        WHERE r.id_makanan = ?`,
       [id]
     );
@@ -82,8 +82,8 @@ exports.getResep = async (req, res) => {
   try {
     const [resep] = await db.execute(
       `SELECT r.*, b.nama_bahan_baku, b.unit_satuan, b.jumlah_stok
-       FROM Resep r
-       JOIN Bahan_Baku b ON r.id_bahan_baku = b.id_bahan_baku
+       FROM resep r
+       JOIN bahan_baku b ON r.id_bahan_baku = b.id_bahan_baku
        WHERE r.id_makanan = ?`,
       [id]
     );
@@ -113,7 +113,7 @@ exports.create = async (req, res) => {
 
     // 1. Insert Makanan (tanpa jumlah_stok, akan di-calculate)
     const [result] = await connection.execute(
-      `INSERT INTO Makanan (nama_makanan, harga_jual, jumlah_stok, id_cabang) 
+      `INSERT INTO makanan (nama_makanan, harga_jual, jumlah_stok, id_cabang) 
        VALUES (?, ?, 0, ?)`,
       [nama_makanan, harga_jual, id_cabang]
     );
@@ -130,7 +130,7 @@ exports.create = async (req, res) => {
         }
 
         await connection.execute(
-          `INSERT INTO Resep_makanan (id_makanan, id_bahan_baku, jumlah_dibutuhkan)
+          `INSERT INTO resep_makanan (id_makanan, id_bahan_baku, jumlah_dibutuhkan)
            VALUES (?, ?, ?)`,
           [idMakanan, id_bahan_baku, jumlah_dibutuhkan]
         );
@@ -177,14 +177,14 @@ exports.update = async (req, res) => {
 
     // 1. Update Makanan
     await connection.execute(
-      `UPDATE Makanan 
+      `UPDATE makanan 
        SET nama_makanan = ?, harga_jual = ?, id_cabang = ?
        WHERE id_makanan = ?`,
       [nama_makanan, harga_jual, id_cabang, id]
     );
 
     // 2. Delete existing resep
-    await connection.execute(`DELETE FROM Resep WHERE id_makanan = ?`, [id]);
+    await connection.execute(`DELETE FROM resep WHERE id_makanan = ?`, [id]);
 
     // 3. Insert new resep
     if (resep && Array.isArray(resep) && resep.length > 0) {
@@ -196,7 +196,7 @@ exports.update = async (req, res) => {
         }
 
         await connection.execute(
-          `INSERT INTO Resep (id_makanan, id_bahan_baku, jumlah_dibutuhkan)
+          `INSERT INTO resep (id_makanan, id_bahan_baku, jumlah_dibutuhkan)
            VALUES (?, ?, ?)`,
           [id, id_bahan_baku, jumlah_dibutuhkan]
         );
@@ -207,7 +207,7 @@ exports.update = async (req, res) => {
     } else {
       // Jika tidak ada resep, set stok = 0
       await connection.execute(
-        `UPDATE Makanan SET jumlah_stok = 0 WHERE id_makanan = ?`,
+        `UPDATE makanan SET jumlah_stok = 0 WHERE id_makanan = ?`,
         [id]
       );
     }
@@ -237,12 +237,12 @@ exports.remove = async (req, res) => {
     await connection.beginTransaction();
 
     // 1. Delete resep first (jika tidak pakai ON DELETE CASCADE)
-    await connection.execute(`DELETE FROM Resep_Makanan WHERE id_makanan = ?`, [
+    await connection.execute(`DELETE FROM resep_makanan WHERE id_makanan = ?`, [
       id,
     ]);
 
     // 2. Delete makanan
-    await connection.execute(`DELETE FROM Makanan WHERE id_makanan = ?`, [id]);
+    await connection.execute(`DELETE FROM makanan WHERE id_makanan = ?`, [id]);
 
     await connection.commit();
 
@@ -264,8 +264,8 @@ async function updateStokMakanan(connection, idMakanan) {
     // Get all resep for this makanan
     const [resep] = await connection.execute(
       `SELECT r.id_bahan_baku, r.jumlah_dibutuhkan, b.jumlah_stok
-       FROM Resep_makanan r
-       JOIN Bahan_Baku b ON r.id_bahan_baku = b.id_bahan_baku
+       FROM resep_makanan r
+       JOIN bahan_baku b ON r.id_bahan_baku = b.id_bahan_baku
        WHERE r.id_makanan = ?`,
       [idMakanan]
     );
@@ -273,7 +273,7 @@ async function updateStokMakanan(connection, idMakanan) {
     if (resep.length === 0) {
       // Tidak ada resep, set stok = 0
       await connection.execute(
-        `UPDATE Makanan SET jumlah_stok = 0 WHERE id_makanan = ?`,
+        `UPDATE makanan SET jumlah_stok = 0 WHERE id_makanan = ?`,
         [idMakanan]
       );
       return;
@@ -295,7 +295,7 @@ async function updateStokMakanan(connection, idMakanan) {
     // Update stok makanan
     const finalStok = minStok === Infinity ? 0 : minStok;
     await connection.execute(
-      `UPDATE Makanan SET jumlah_stok = ? WHERE id_makanan = ?`,
+      `UPDATE makanan SET jumlah_stok = ? WHERE id_makanan = ?`,
       [finalStok, idMakanan]
     );
 
@@ -315,8 +315,8 @@ exports.getTransaksiMakanan = async (req, res) => {
   const { id_cabang, tanggal_awal, tanggal_akhir } = req.query;
   let query = `
     SELECT tm.*, c.nama_cabang 
-    FROM Transaksi_Makanan tm
-    LEFT JOIN Cabang c ON tm.id_cabang = c.id_cabang
+    FROM transaksi_makanan tm
+    LEFT JOIN cabang c ON tm.id_cabang = c.id_cabang
     WHERE 1=1
   `;
   const params = [];
@@ -349,8 +349,8 @@ exports.getDetailTransaksi = async (req, res) => {
   try {
     const [details] = await db.execute(
       `SELECT dtm.*, m.nama_makanan
-       FROM Detail_Transaksi_Makanan dtm
-       JOIN Makanan m ON dtm.id_makanan = m.id_makanan
+       FROM detail_transaksi_makanan dtm
+       JOIN makanan m ON dtm.id_makanan = m.id_makanan
        WHERE dtm.id_transaksi_makanan = ?`,
       [id]
     );
