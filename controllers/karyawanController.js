@@ -85,8 +85,8 @@ exports.getKaryawanTanpaAkun = async (req, res) => {
   try {
     const [rows] = await db.execute(`
       SELECT k.id_karyawan, k.nama_karyawan
-      FROM Karyawan k
-      LEFT JOIN User u ON k.id_karyawan = u.id_karyawan
+      FROM karyawan k
+      LEFT JOIN user u ON k.id_karyawan = u.id_karyawan
       WHERE u.id_karyawan IS NULL
     `);
     res.json(rows);
