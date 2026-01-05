@@ -108,7 +108,7 @@ const createRental = async (req, res) => {
 
     // Update status PS ke borrowed_out
     await db.execute(
-      "UPDATE PS SET status_fisik = 'borrowed_out', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
+      "UPDATE ps SET status_fisik = 'borrowed_out', updated_at = CURRENT_TIMESTAMP WHERE id_ps = ?",
       [data.id_ps]
     );
 
