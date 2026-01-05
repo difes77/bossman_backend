@@ -3,14 +3,33 @@ const db = require("../config/db");
 exports.getAll = async (req, res) => {
   try {
     const [rows] = await db.execute(
-      "SELECT * FROM Bahan_Baku ORDER BY created_at DESC"
+      `SELECT b.*, c.nama_cabang 
+       FROM Bahan_Baku b
+       LEFT JOIN Cabang c ON b.id_cabang = c.id_cabang
+       ORDER BY b.created_at DESC`
     );
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ message: "Gagal mengambil data bahan baku" });
+    console.error("❌ Error getting bahan baku:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+exports.getByCabang = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [rows] = await db.execute(
+      "SELECT * FROM Bahan_Baku WHERE id_cabang = ? ORDER BY created_at DESC",
+      [id]
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Gagal mengambil bahan baku per cabang" });
+  }
+};
 exports.create = async (req, res) => {
   const { nama_bahan_baku, jumlah_stok, unit_satuan, id_cabang } = req.body;
   try {

@@ -1,6 +1,6 @@
 const floorPlanModel = require("../models/floorPlanModel");
 const mapConsoleStatus = require("../helpers/mapConsoleStatus");
-
+const db = require("../config/db");
 const getConsoleDetail = async (req, res) => {
   try {
     const { id_ps } = req.params;
@@ -11,8 +11,46 @@ const getConsoleDetail = async (req, res) => {
     }
 
     const consoleData = consoleRows[0];
+
+    // ✅ Get semua harga dari Jenis_PS
+    const [jenisRows] = await db.execute(
+      `SELECT 
+        harga_per_jam,
+        harga_per_12_jam,
+        harga_1_hari,
+        harga_2_hari,
+        harga_3_hari,
+        harga_4_hari,
+        harga_5_hari,
+        harga_6_hari,
+        harga_7_hari
+       FROM Jenis_PS 
+       WHERE id_jenis_ps = ?`,
+      [consoleData.id_jenis_ps]
+    );
+
+    // ✅ Extract semua harga atau set default 0
+    const hargaData =
+      jenisRows.length > 0
+        ? jenisRows[0]
+        : {
+            harga_per_jam: 0,
+            harga_per_12_jam: 0,
+            harga_1_hari: 0,
+            harga_2_hari: 0,
+            harga_3_hari: 0,
+            harga_4_hari: 0,
+            harga_5_hari: 0,
+            harga_6_hari: 0,
+            harga_7_hari: 0,
+          };
+
     const [rentalRows] = await floorPlanModel.getActiveRentalByConsole(id_ps);
     const sewaAktif = rentalRows.length > 0;
+
+    // ✅ Fix: rental harus didefinisikan sebelum digunakan
+    const rental = sewaAktif ? rentalRows[0] : null;
+
     const mappedData = mapConsoleStatus(
       consoleData,
       sewaAktif,
@@ -22,18 +60,41 @@ const getConsoleDetail = async (req, res) => {
     if (!sewaAktif) {
       return res.json({
         status: "available",
-        console: mappedData,
+        console: {
+          ...mappedData,
+          // ✅ Include semua harga paket
+          harga_per_jam: hargaData.harga_per_jam,
+          harga_per_12_jam: hargaData.harga_per_12_jam,
+          harga_1_hari: hargaData.harga_1_hari,
+          harga_2_hari: hargaData.harga_2_hari,
+          harga_3_hari: hargaData.harga_3_hari,
+          harga_4_hari: hargaData.harga_4_hari,
+          harga_5_hari: hargaData.harga_5_hari,
+          harga_6_hari: hargaData.harga_6_hari,
+          harga_7_hari: hargaData.harga_7_hari,
+        },
       });
     }
 
-    const rental = rentalRows[0];
     const now = new Date();
     const estimasi = new Date(rental.waktu_selesai_estimasi);
     const sisa = Math.max(0, Math.floor((estimasi - now) / 60000)); // dalam menit
 
     return res.json({
       status: "in_use",
-      console: mappedData,
+      console: {
+        ...mappedData,
+        // ✅ Include semua harga paket
+        harga_per_jam: hargaData.harga_per_jam,
+        harga_per_12_jam: hargaData.harga_per_12_jam,
+        harga_1_hari: hargaData.harga_1_hari,
+        harga_2_hari: hargaData.harga_2_hari,
+        harga_3_hari: hargaData.harga_3_hari,
+        harga_4_hari: hargaData.harga_4_hari,
+        harga_5_hari: hargaData.harga_5_hari,
+        harga_6_hari: hargaData.harga_6_hari,
+        harga_7_hari: hargaData.harga_7_hari,
+      },
       rental: {
         id_sewa: rental.id_sewa_ditempat,
         nama_penyewa: rental.nama_penyewa,
@@ -45,6 +106,7 @@ const getConsoleDetail = async (req, res) => {
       },
     });
   } catch (err) {
+    console.error("❌ Error getConsoleDetail:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -54,13 +116,7 @@ const updateConsoleStatus = async (req, res) => {
     const { id_ps } = req.params;
     const { status_fisik } = req.body;
 
-    const allowedStatuses = [
-      "available",
-      "borrowed_out",
-      "maintenance",
-      "rusak",
-      "in_use",
-    ];
+    const allowedStatuses = ["available", "maintenance"];
 
     if (!allowedStatuses.includes(status_fisik)) {
       return res.status(400).json({ message: "Status fisik tidak valid" });

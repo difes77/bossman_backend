@@ -16,7 +16,20 @@ router.post(
 );
 
 router.put("/:id/tolak", authenticateToken, controller.tolakSewa);
-router.put("/:id/kembali", authenticateToken, controller.kembalikanSewa);
+router.put(
+  "/:id/kembali",
+  authenticateToken,
+  upload.fields([
+    { name: "foto_bukti_1", maxCount: 1 },
+    { name: "foto_bukti_2", maxCount: 1 },
+  ]),
+  controller.completeSewa
+);
+router.get(
+  "/approved/:id_cabang",
+  authenticateToken,
+  controller.getApprovedRentalsByBranch
+);
 router.put("/:id/setujui", authenticateToken, controller.setujuiSewa);
 
 router.get(

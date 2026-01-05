@@ -46,6 +46,7 @@ exports.login = async (req, res) => {
         id_cabang: user.id_cabang,
         nama_cabang: user.nama_cabang,
         role: user.role,
+        no_wa: user.no_wa,
       },
     });
   } catch (error) {

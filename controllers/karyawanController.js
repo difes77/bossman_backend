@@ -11,7 +11,19 @@ exports.getAllKaryawan = async (req, res) => {
     res.status(500).json({ message: "Gagal mengambil data karyawan" });
   }
 };
-
+exports.getKaryawanByCabang = async (req, res) => {
+  try {
+    const { idCabang } = req.params;
+    const [rows] = await db.execute(
+      "SELECT id_karyawan, nama_karyawan FROM karyawan WHERE id_cabang = ?",
+      [idCabang]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("🔥 Error getKaryawanByCabang:", err);
+    res.status(500).json({ message: "Gagal mengambil data karyawan" });
+  }
+};
 exports.createKaryawan = async (req, res) => {
   try {
     const { nama_karyawan, no_wa, alamat, id_cabang, foto_ktp } = req.body;

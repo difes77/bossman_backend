@@ -6,18 +6,17 @@ const {
   verifyOwner,
 } = require("../middlewares/authMiddleware");
 
-router.get(
-  "/",
-  authenticateToken,
-  verifyOwner,
-  karyawanController.getAllKaryawan
-);
+router.get("/", authenticateToken, karyawanController.getAllKaryawan);
+
+// ✅ Route baru
+
 router.post(
   "/",
   authenticateToken,
   verifyOwner,
   karyawanController.createKaryawan
 );
+
 router.get("/tanpa-akun", karyawanController.getKaryawanTanpaAkun);
 
 router.put(
@@ -25,6 +24,11 @@ router.put(
   authenticateToken,
   verifyOwner,
   karyawanController.updateKaryawan
+);
+router.get(
+  "/cabang/:idCabang",
+  authenticateToken,
+  karyawanController.getKaryawanByCabang
 );
 router.delete(
   "/:id",

@@ -5,7 +5,7 @@ exports.findUserByEmail = async (email) => {
     `
     SELECT 
       u.user_id, u.email, u.password, u.role,
-      k.id_karyawan, k.nama_karyawan, k.id_cabang,
+      k.id_karyawan, k.nama_karyawan, k.id_cabang, k.no_wa,
       c.nama_cabang
     FROM User u
     JOIN Karyawan k ON u.id_karyawan = k.id_karyawan

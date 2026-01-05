@@ -114,10 +114,15 @@ const updateStatusPS = async (req, res) => {
     const { id_ps } = req.params;
     const { status_fisik } = req.body;
 
+    const allowedStatuses = ["available", "maintenance"];
+    if (!allowedStatuses.includes(status_fisik)) {
+      return res.status(400).json({ message: "Status fisik tidak valid." });
+    }
+
     await psModel.updateStatusPS(id_ps, status_fisik);
     res.json({ message: "Status PS berhasil diupdate" });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Gagal update status PS:", err.message);
     res.status(500).json({ message: "Gagal update status PS" });
   }
 };

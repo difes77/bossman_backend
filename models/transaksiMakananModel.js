@@ -54,9 +54,56 @@ const getDetail = async (idTransaksi) => {
   return rows;
 };
 
+const getByTanggal = async ({ tanggal, id_cabang }) => {
+  const query = `
+    SELECT 
+      tm.id_transaksi_makanan,
+      tm.created_at,
+      tm.total_harga,
+      k.nama_karyawan,
+      m.nama_makanan,
+      dm.jumlah,
+      dm.harga_satuan,
+      dm.subtotal
+    FROM Transaksi_Makanan tm
+    JOIN Karyawan k ON tm.id_karyawan = k.id_karyawan
+    JOIN Detail_Transaksi_Makanan dm ON tm.id_transaksi_makanan = dm.id_transaksi_makanan
+    JOIN Makanan m ON dm.id_makanan = m.id_makanan
+    WHERE DATE(tm.created_at) = ?
+      AND tm.id_cabang = ?
+    ORDER BY tm.created_at DESC
+  `;
+
+  const [rows] = await db.execute(query, [tanggal, id_cabang]);
+
+  const grouped = {};
+  for (const row of rows) {
+    const id = row.id_transaksi_makanan;
+    if (!grouped[id]) {
+      grouped[id] = {
+        id,
+        waktu: row.created_at,
+        total_harga: row.total_harga,
+        nama_karyawan: row.nama_karyawan,
+        items: [],
+      };
+    }
+
+    grouped[id].items.push({
+      nama_makanan: row.nama_makanan,
+      jumlah: row.jumlah,
+      harga_satuan: row.harga_satuan,
+      subtotal: row.subtotal,
+    });
+  }
+
+  return Object.values(grouped);
+};
+
 module.exports = {
   createTransaksi,
   createDetail,
   getAll,
   getDetail,
+  getByTanggal,
 };

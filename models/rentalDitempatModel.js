@@ -3,8 +3,8 @@ const db = require("../config/db");
 const createSewaDitempat = async (data) => {
   const sql = `
     INSERT INTO Sewa_Ditempat 
-    (id_ps, id_karyawan, nama_penyewa, waktu_mulai, durasi_menit, waktu_selesai_estimasi, total_harga, id_cabang)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    (id_ps, id_karyawan, nama_penyewa, waktu_mulai, durasi_menit, waktu_selesai_estimasi, total_harga, diskon_persen, nominal_diskon, total_biaya, id_cabang)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const values = [
     data.id_ps,
@@ -14,6 +14,9 @@ const createSewaDitempat = async (data) => {
     data.durasi_menit,
     data.waktu_selesai_estimasi,
     data.total_harga,
+    data.diskon_persen || 0,
+    data.nominal_diskon || 0,
+    data.total_biaya || 0,
     data.id_cabang,
   ];
 

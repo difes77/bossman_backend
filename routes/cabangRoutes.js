@@ -20,5 +20,11 @@ router.delete(
   verifyOwner,
   cabangController.deleteCabang
 );
+router.put(
+  "/:id/restore",
+  authenticateToken,
+  verifyOwner,
+  cabangController.restoreCabang
+); // ✅ New
 
 module.exports = router;

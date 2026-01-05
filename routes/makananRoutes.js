@@ -1,26 +1,25 @@
 const express = require("express");
 const router = express.Router();
 const makananController = require("../controllers/makananController");
-const {
-  authenticateToken,
-  verifyOwner,
-} = require("../middlewares/authMiddleware");
+const { authenticateToken } = require("../middlewares/authMiddleware");
+// ✅ MAKANAN ROUTES
+router.get("/", authenticateToken, makananController.getAll);
+router.get("/menu", authenticateToken, makananController.getMenu);
+router.get("/:id", authenticateToken, makananController.getById); // ✅ NEW
+router.get("/:id/resep", authenticateToken, makananController.getResep); // ✅ NEW
+router.post("/", authenticateToken, makananController.create);
+router.put("/:id", authenticateToken, makananController.update);
+router.delete("/:id", authenticateToken, makananController.remove);
 
-router.get("/", authenticateToken, verifyOwner, makananController.getAll);
-router.post("/", authenticateToken, verifyOwner, makananController.create);
-router.put("/:id", authenticateToken, verifyOwner, makananController.update);
-router.delete("/:id", authenticateToken, verifyOwner, makananController.remove);
-
+// ✅ TRANSAKSI ROUTES
 router.get(
-  "/transaksi",
+  "/transaksi/all",
   authenticateToken,
-  verifyOwner,
   makananController.getTransaksiMakanan
 );
 router.get(
-  "/transaksi/:id",
+  "/transaksi/:id/detail",
   authenticateToken,
-  verifyOwner,
   makananController.getDetailTransaksi
 );
 

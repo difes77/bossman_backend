@@ -1,10 +1,25 @@
+// controllers/rentalDitempatController.js
 const rentalDitempatModel = require("../models/rentalDitempatModel");
 const db = require("../config/db");
+const {
+  emitPsStatusUpdate,
+  emitSewaDitempatStarted,
+  emitSewaDitempatCompleted,
+  EVENTS,
+} = require("../websocket/socketHandler");
 
 const createSewaDitempat = async (req, res) => {
   try {
-    const { id_ps, id_karyawan, nama_penyewa, durasi_menit, id_cabang } =
-      req.body;
+    const {
+      id_ps,
+      id_karyawan,
+      nama_penyewa,
+      durasi_menit,
+      id_cabang,
+      diskon_persen,
+      nominal_diskon,
+      total_biaya,
+    } = req.body;
 
     if (!id_ps || !id_karyawan || !durasi_menit || !id_cabang) {
       return res.status(400).json({ message: "Data wajib tidak lengkap" });
@@ -12,9 +27,9 @@ const createSewaDitempat = async (req, res) => {
 
     // Ambil harga_per_jam dari jenis_ps
     const [[hargaResult]] = await db.execute(
-      `SELECT jp.harga_per_jam 
-       FROM PS p 
-       JOIN Jenis_PS jp ON p.id_jenis_ps = jp.id_jenis_ps 
+      `SELECT jp.harga_per_jam
+       FROM PS p
+       JOIN Jenis_PS jp ON p.id_jenis_ps = jp.id_jenis_ps
        WHERE p.id_ps = ?`,
       [id_ps]
     );
@@ -27,11 +42,16 @@ const createSewaDitempat = async (req, res) => {
 
     const hargaPerJam = hargaResult.harga_per_jam;
     const durasiJam = durasi_menit / 60;
-    const total_harga = Math.round(hargaPerJam * durasiJam);
+    const subtotal = Math.round(hargaPerJam * durasiJam);
+
+    const diskonPersenFinal = diskon_persen || 0;
+    const nominalDiskonFinal =
+      nominal_diskon || Math.round(subtotal * (diskonPersenFinal / 100));
+    const totalBiayaFinal = total_biaya || subtotal - nominalDiskonFinal;
 
     // Cek status PS
     const [[psStatus]] = await db.execute(
-      "SELECT status_fisik FROM PS WHERE id_ps = ?",
+      "SELECT status_fisik, nomor_ps FROM PS WHERE id_ps = ?",
       [id_ps]
     );
 
@@ -55,7 +75,10 @@ const createSewaDitempat = async (req, res) => {
       waktu_mulai,
       durasi_menit,
       waktu_selesai_estimasi,
-      total_harga,
+      total_harga: subtotal,
+      diskon_persen: diskonPersenFinal,
+      nominal_diskon: nominalDiskonFinal,
+      total_biaya: totalBiayaFinal,
       id_cabang,
     });
 
@@ -65,19 +88,35 @@ const createSewaDitempat = async (req, res) => {
       [id_ps]
     );
 
-    // Emit ke socket jika ada
-    if (req.io) {
-      req.io.emit("ps_status_updated", {
-        id_ps,
-        status_fisik: "in_use",
-        action: "sewa_ditempat_dimulai",
-        id_sewa_ditempat: result.insertId,
-      });
-    }
+    // ✅ EMIT: PS Status Updated
+    emitPsStatusUpdate(id_cabang, {
+      id_ps,
+      nomor_ps: psStatus.nomor_ps,
+      status_fisik: "in_use",
+      action: "sewa_ditempat_dimulai",
+    });
+
+    // ✅ EMIT: Sewa Ditempat Started
+    emitSewaDitempatStarted(id_cabang, {
+      id_sewa_ditempat: result.insertId,
+      id_ps,
+      nomor_ps: psStatus.nomor_ps,
+      nama_penyewa,
+      durasi_menit,
+      waktu_mulai: waktu_mulai.toISOString(),
+      waktu_selesai_estimasi: waktu_selesai_estimasi.toISOString(),
+      total_biaya: totalBiayaFinal,
+    });
 
     res.status(201).json({
       message: "Sewa berhasil dimulai",
       id_sewa_ditempat: result.insertId,
+      detail: {
+        subtotal,
+        diskon_persen: diskonPersenFinal,
+        nominal_diskon: nominalDiskonFinal,
+        total_biaya: totalBiayaFinal,
+      },
     });
   } catch (err) {
     console.error("Gagal buat sewa ditempat:", err);
@@ -90,7 +129,10 @@ const completeSewaDitempat = async (req, res) => {
     const { id_sewa_ditempat } = req.params;
 
     const [[sewa]] = await db.execute(
-      "SELECT id_ps FROM Sewa_Ditempat WHERE id_sewa_ditempat = ?",
+      `SELECT sd.id_ps, sd.id_cabang, sd.nama_penyewa, p.nomor_ps 
+       FROM Sewa_Ditempat sd
+       JOIN PS p ON sd.id_ps = p.id_ps
+       WHERE sd.id_sewa_ditempat = ?`,
       [id_sewa_ditempat]
     );
 
@@ -113,14 +155,21 @@ const completeSewaDitempat = async (req, res) => {
       [sewa.id_ps]
     );
 
-    if (req.io) {
-      req.io.emit("ps_status_updated", {
-        id_ps: sewa.id_ps,
-        status_fisik: "available",
-        action: "sewa_ditempat_selesai",
-        id_sewa_ditempat,
-      });
-    }
+    // ✅ EMIT: PS Status Updated
+    emitPsStatusUpdate(sewa.id_cabang, {
+      id_ps: sewa.id_ps,
+      nomor_ps: sewa.nomor_ps,
+      status_fisik: "available",
+      action: "sewa_ditempat_selesai",
+    });
+
+    // ✅ EMIT: Sewa Ditempat Completed
+    emitSewaDitempatCompleted(sewa.id_cabang, {
+      id_sewa_ditempat: parseInt(id_sewa_ditempat),
+      id_ps: sewa.id_ps,
+      nomor_ps: sewa.nomor_ps,
+      nama_penyewa: sewa.nama_penyewa,
+    });
 
     res.json({ message: "Sewa berhasil diselesaikan" });
   } catch (err) {
@@ -171,6 +220,8 @@ const getSewaDitempatList = async (req, res) => {
       query += " AND s.status_sewa = ?";
       params.push(status);
     }
+
+    query += " ORDER BY s.created_at DESC";
 
     const [result] = await db.execute(query, params);
     res.json(result);

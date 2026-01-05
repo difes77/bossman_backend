@@ -1,6 +1,8 @@
 const db = require("../config/db");
+const PDFDocument = require("pdfkit");
+const ExcelJS = require("exceljs");
 
-exports.createPenggunaan = async (req, res) => {
+const createPenggunaan = async (req, res) => {
   const {
     id_karyawan,
     id_bahan_baku,
@@ -48,7 +50,7 @@ exports.createPenggunaan = async (req, res) => {
   }
 };
 
-exports.getPenggunaanFiltered = async (req, res) => {
+const getPenggunaanFiltered = async (req, res) => {
   const { id_cabang, tanggal } = req.query;
 
   let query = `
@@ -81,9 +83,7 @@ exports.getPenggunaanFiltered = async (req, res) => {
   }
 };
 
-const PDFDocument = require("pdfkit");
-
-exports.exportPDF = async (req, res) => {
+const exportPDF = async (req, res) => {
   const { id_cabang, tanggal } = req.query;
 
   let query = `
@@ -139,9 +139,8 @@ exports.exportPDF = async (req, res) => {
     res.status(500).json({ message: "Gagal export PDF" });
   }
 };
-const ExcelJS = require("exceljs");
 
-exports.exportExcel = async (req, res) => {
+const exportExcel = async (req, res) => {
   const { id_cabang, tanggal } = req.query;
 
   let query = `
@@ -207,4 +206,52 @@ exports.exportExcel = async (req, res) => {
     console.error("Export Excel error:", err);
     res.status(500).json({ message: "Gagal export Excel" });
   }
+};
+
+const getByTanggal = async (req, res) => {
+  let { tanggal, id_cabang } = req.query;
+
+  if (!tanggal) {
+    const now = new Date();
+    tanggal = now.toISOString().split("T")[0]; // default ke hari ini
+  }
+
+  let query = `
+    SELECT 
+      pb.id_penggunaan_bahan,
+      pb.created_at,
+      pb.jumlah_digunakan,
+      pb.keterangan,
+      k.nama_karyawan,
+      b.nama_bahan_baku,
+      b.unit_satuan
+    FROM Penggunaan_Bahan_Baku pb
+    JOIN Karyawan k ON pb.id_karyawan = k.id_karyawan
+    JOIN Bahan_Baku b ON pb.id_bahan_baku = b.id_bahan_baku
+    WHERE DATE(pb.created_at) = ?
+  `;
+  const params = [tanggal];
+
+  if (id_cabang) {
+    query += ` AND pb.id_cabang = ?`;
+    params.push(id_cabang);
+  }
+
+  query += ` ORDER BY pb.created_at DESC`;
+
+  try {
+    const [rows] = await db.execute(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error("❌ Gagal ambil penggunaan bahan:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = {
+  createPenggunaan,
+  getPenggunaanFiltered,
+  exportPDF,
+  exportExcel,
+  getByTanggal,
 };
