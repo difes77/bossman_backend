@@ -553,7 +553,7 @@ const getSewaList = async (req, res) => {
   try {
     const { status, tanggal, id_cabang } = req.query;
 
-    let query = `SELECT * FROM Sewa_Dibawa_Pulang WHERE 1=1`;
+    let query = `SELECT * FROM sewa_dibawa_pulang WHERE 1=1`;
     const params = [];
 
     if (status) {
