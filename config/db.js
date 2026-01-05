@@ -1,8 +1,8 @@
-const mysql = require("mysql2/promise"); // ✅ ganti ini
+const mysql = require("mysql2/promise");
 require("dotenv").config();
 
-const connection = mysql.createPool({
-  // ✅ pakai createPool lebih baik
+// Railway menyediakan satu string lengkap dalam variabel DATABASE_URL
+const connection = mysql.createPool(process.env.DATABASE_URL || {
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
