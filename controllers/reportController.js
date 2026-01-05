@@ -15,14 +15,14 @@ exports.createReport = async (req, res) => {
     );
 
     const [result] = await db.query(
-      `INSERT INTO Report (id_karyawan, deskripsi_report, foto_report_urls, id_cabang)
+      `INSERT INTO report (id_karyawan, deskripsi_report, foto_report_urls, id_cabang)
        VALUES (?, ?, ?, ?)`,
       [id_karyawan, deskripsi_report, JSON.stringify(fotoUrls), id_cabang]
     );
 
     // Get karyawan name
     const [karyawanRows] = await db.query(
-      "SELECT nama_karyawan FROM Karyawan WHERE id_karyawan = ?",
+      "SELECT nama_karyawan FROM karyawan WHERE id_karyawan = ?",
       [id_karyawan]
     );
     const namaKaryawan = karyawanRows[0]?.nama_karyawan || "Unknown";
@@ -64,9 +64,9 @@ exports.getAllReports = async (req, res) => {
 
     let query = `
       SELECT r.*, k.nama_karyawan, c.nama_cabang
-      FROM Report r
-      JOIN Karyawan k ON r.id_karyawan = k.id_karyawan
-      JOIN Cabang c ON r.id_cabang = c.id_cabang
+      FROM report r
+      JOIN karyawan k ON r.id_karyawan = k.id_karyawan
+      JOIN cabang c ON r.id_cabang = c.id_cabang
     `;
 
     const params = [];
@@ -95,7 +95,7 @@ exports.getAllReports = async (req, res) => {
 exports.getReportById = async (req, res) => {
   try {
     // ✅ FIXED: Proper query syntax
-    const [rows] = await db.query("SELECT * FROM Report WHERE id_report = ?", [
+    const [rows] = await db.query("SELECT * FROM report WHERE id_report = ?", [
       req.params.id,
     ]);
 
@@ -123,12 +123,12 @@ exports.updateStatus = async (req, res) => {
 
     // Get report untuk emit event
     const [reportRows] = await db.query(
-      "SELECT id_cabang FROM Report WHERE id_report = ?",
+      "SELECT id_cabang FROM report WHERE id_report = ?",
       [req.params.id]
     );
 
     // ✅ FIXED: Proper query syntax
-    await db.query("UPDATE Report SET status_report = ? WHERE id_report = ?", [
+    await db.query("UPDATE report SET status_report = ? WHERE id_report = ?", [
       status_report,
       req.params.id,
     ]);
