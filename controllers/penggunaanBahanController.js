@@ -20,7 +20,7 @@ const createPenggunaan = async (req, res) => {
 
   try {
     await conn.execute(
-      `INSERT INTO Penggunaan_Bahan_Baku 
+      `INSERT INTO penggunaan_bahan_baku 
        (id_karyawan, id_bahan_baku, jumlah_digunakan, keterangan, id_cabang)
        VALUES (?, ?, ?, ?, ?)`,
       [
@@ -33,7 +33,7 @@ const createPenggunaan = async (req, res) => {
     );
 
     await conn.execute(
-      `UPDATE Bahan_Baku 
+      `UPDATE bahan_baku 
        SET jumlah_stok = jumlah_stok - ? 
        WHERE id_bahan_baku = ?`,
       [jumlah_digunakan, id_bahan_baku]
@@ -55,9 +55,9 @@ const getPenggunaanFiltered = async (req, res) => {
 
   let query = `
     SELECT pb.*, b.nama_bahan_baku, b.unit_satuan, k.nama_karyawan
-    FROM Penggunaan_Bahan_Baku pb
-    JOIN Bahan_Baku b ON pb.id_bahan_baku = b.id_bahan_baku
-    JOIN Karyawan k ON pb.id_karyawan = k.id_karyawan
+    FROM penggunaan_bahan_baku pb
+    JOIN bahan_baku b ON pb.id_bahan_baku = b.id_bahan_baku
+    JOIN karyawan k ON pb.id_karyawan = k.id_karyawan
     WHERE 1=1
   `;
   const params = [];
@@ -88,9 +88,9 @@ const exportPDF = async (req, res) => {
 
   let query = `
     SELECT pb.*, b.nama_bahan_baku, b.unit_satuan, k.nama_karyawan
-    FROM Penggunaan_Bahan_Baku pb
-    JOIN Bahan_Baku b ON pb.id_bahan_baku = b.id_bahan_baku
-    JOIN Karyawan k ON pb.id_karyawan = k.id_karyawan
+    FROM penggunaan_bahan_baku pb
+    JOIN bahan_baku b ON pb.id_bahan_baku = b.id_bahan_baku
+    JOIN karyawan k ON pb.id_karyawan = k.id_karyawan
     WHERE 1=1
   `;
   const params = [];
@@ -145,9 +145,9 @@ const exportExcel = async (req, res) => {
 
   let query = `
     SELECT pb.*, b.nama_bahan_baku, b.unit_satuan, k.nama_karyawan
-    FROM Penggunaan_Bahan_Baku pb
-    JOIN Bahan_Baku b ON pb.id_bahan_baku = b.id_bahan_baku
-    JOIN Karyawan k ON pb.id_karyawan = k.id_karyawan
+    FROM penggunaan_bahan_baku pb
+    JOIN bahan_baku b ON pb.id_bahan_baku = b.id_bahan_baku
+    JOIN karyawan k ON pb.id_karyawan = k.id_karyawan
     WHERE 1=1
   `;
   const params = [];
@@ -225,9 +225,9 @@ const getByTanggal = async (req, res) => {
       k.nama_karyawan,
       b.nama_bahan_baku,
       b.unit_satuan
-    FROM Penggunaan_Bahan_Baku pb
-    JOIN Karyawan k ON pb.id_karyawan = k.id_karyawan
-    JOIN Bahan_Baku b ON pb.id_bahan_baku = b.id_bahan_baku
+    FROM penggunaan_bahan_baku pb
+    JOIN karyawan k ON pb.id_karyawan = k.id_karyawan
+    JOIN bahan_baku b ON pb.id_bahan_baku = b.id_bahan_baku
     WHERE DATE(pb.created_at) = ?
   `;
   const params = [tanggal];
