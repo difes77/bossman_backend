@@ -26,7 +26,7 @@ const createSewaDitempat = async (req, res) => {
     }
 
     // Ambil harga_per_jam dari jenis_ps
-const [[hargaResult]] = await db.execute(
+    const [[hargaResult]] = await db.execute(
       `SELECT jp.harga_per_jam
        FROM ps p
        JOIN jenis_ps jp ON p.id_jenis_ps = jp.id_jenis_ps
@@ -51,7 +51,7 @@ const [[hargaResult]] = await db.execute(
 
     // Cek status PS
     const [[psStatus]] = await db.execute(
-      "SELECT status_fisik, nomor_ps FROM ps WHERE id_ps = ?",
+      "SELECT status_fisik, nomor_ps FROM ps WHERE id_ps = ?", // Pastikan 'ps' bukan 'PS'
       [id_ps]
     );
 
