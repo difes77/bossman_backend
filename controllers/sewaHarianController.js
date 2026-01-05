@@ -21,10 +21,10 @@ const getSewaHarian = async (req, res) => {
         k.nama_karyawan,
         ps.nomor_ps,
         ROUND((sdt.durasi_menit / 60.0) * jp.harga_per_jam, 0) AS total_harga
-      FROM Sewa_DiTempat sdt
-      JOIN Karyawan k ON sdt.id_karyawan = k.id_karyawan
-      JOIN PS ps ON sdt.id_ps = ps.id_ps
-      JOIN Jenis_PS jp ON ps.id_jenis_ps = jp.id_jenis_ps
+      FROM sewa_diTempat sdt
+      JOIN karyawan k ON sdt.id_karyawan = k.id_karyawan
+      JOIN ps ps ON sdt.id_ps = ps.id_ps
+      JOIN jenis_ps jp ON ps.id_jenis_ps = jp.id_jenis_ps
       WHERE DATE(sdt.waktu_mulai) = ?
         AND sdt.id_cabang = ?
       ORDER BY sdt.waktu_mulai DESC
@@ -43,9 +43,9 @@ const getSewaHarian = async (req, res) => {
         sdp.nama_penyewa,
         k.nama_karyawan,
         ps.nomor_ps
-      FROM Sewa_Dibawa_Pulang sdp
-      JOIN Karyawan k ON sdp.id_karyawan = k.id_karyawan
-      JOIN PS ps ON sdp.id_ps = ps.id_ps
+      FROM sewa_dibawa_pulang sdp
+      JOIN karyawan k ON sdp.id_karyawan = k.id_karyawan
+      JOIN ps ps ON sdp.id_ps = ps.id_ps
       WHERE DATE(sdp.created_at) = ?
         AND sdp.id_cabang = ?
       ORDER BY sdp.created_at DESC
