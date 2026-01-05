@@ -8,8 +8,8 @@ const getHargaPerJam = async (req, res) => {
   try {
     const [[result]] = await db.execute(
       `SELECT jp.harga_per_jam 
-       FROM PS p 
-       JOIN Jenis_PS jp ON p.id_jenis_ps = jp.id_jenis_ps 
+       FROM ps p 
+       JOIN jenis_ps jp ON p.id_jenis_ps = jp.id_jenis_ps 
        WHERE p.id_ps = ?`,
       [id_ps]
     );
@@ -89,10 +89,10 @@ const updatePS = async (req, res) => {
     );
 
     if (Array.isArray(game_ids)) {
-      await conn.execute(`DELETE FROM PS_Game WHERE id_ps = ?`, [id_ps]);
+      await conn.execute(`DELETE FROM ps_game WHERE id_ps = ?`, [id_ps]);
       for (const id_game of game_ids) {
         await conn.execute(
-          `INSERT INTO PS_Game (id_ps, id_game) VALUES (?, ?)`,
+          `INSERT INTO ps_game (id_ps, id_game) VALUES (?, ?)`,
           [id_ps, id_game]
         );
       }
@@ -144,8 +144,8 @@ const getGamesByPS = async (req, res) => {
   try {
     const [games] = await db.execute(
       `SELECT g.id_game, g.nama_game 
-       FROM PS_Game pg 
-       JOIN Game g ON pg.id_game = g.id_game 
+       FROM ps_game pg 
+       JOIN game g ON pg.id_game = g.id_game 
        WHERE pg.id_ps = ?`,
       [id_ps]
     );
@@ -165,9 +165,9 @@ const updateGamesOfPS = async (req, res) => {
   await conn.beginTransaction();
 
   try {
-    await conn.execute(`DELETE FROM PS_Game WHERE id_ps = ?`, [id_ps]);
+    await conn.execute(`DELETE FROM ps_game WHERE id_ps = ?`, [id_ps]);
     for (const id_game of game_ids) {
-      await conn.execute(`INSERT INTO PS_Game (id_ps, id_game) VALUES (?, ?)`, [
+      await conn.execute(`INSERT INTO ps_game (id_ps, id_game) VALUES (?, ?)`, [
         id_ps,
         id_game,
       ]);
@@ -186,7 +186,7 @@ const updateGamesOfPS = async (req, res) => {
 
 const getAllJenisPS = async (req, res) => {
   try {
-    const [rows] = await db.execute("SELECT * FROM Jenis_PS");
+    const [rows] = await db.execute("SELECT * FROM jenis_ps");
     res.json(rows);
   } catch (err) {
     console.error("Gagal mengambil Jenis PS:", err);
@@ -196,7 +196,7 @@ const getAllJenisPS = async (req, res) => {
 
 const getAllGames = async (req, res) => {
   try {
-    const [games] = await db.execute("SELECT id_game, nama_game FROM Game");
+    const [games] = await db.execute("SELECT id_game, nama_game FROM game");
     res.json(games);
   } catch (err) {
     console.error("Gagal mengambil semua game:", err);
