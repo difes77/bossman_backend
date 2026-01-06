@@ -21,7 +21,7 @@ const getSewaHarian = async (req, res) => {
         k.nama_karyawan,
         ps.nomor_ps,
         ROUND((sdt.durasi_menit / 60.0) * jp.harga_per_jam, 0) AS total_harga
-      FROM sewa_diTempat sdt
+      FROM sewa_ditempat sdt
       JOIN karyawan k ON sdt.id_karyawan = k.id_karyawan
       JOIN ps ps ON sdt.id_ps = ps.id_ps
       JOIN jenis_ps jp ON ps.id_jenis_ps = jp.id_jenis_ps
