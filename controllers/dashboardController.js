@@ -511,7 +511,7 @@ const exportPDF = async (req, res) => {
         (SELECT COUNT(*) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(created_at, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'ditolak') AS jumlahPenolakanSewa,
         
-        (SELECT IFNULL(SUM(denda_keterlambatan),0) FROM sewa_dibawa_dulang 
+        (SELECT IFNULL(SUM(denda_keterlambatan),0) FROM sewa_dibawa_pulang 
          WHERE DATE(CONVERT_TZ(tanggal_pengembalian, '+00:00', '+07:00')) BETWEEN ? AND ? AND id_cabang = ? AND status_sewa = 'dikembalikan') AS totalDendaKeterlambatan,
         
         (SELECT IFNULL(SUM(total_akhir),0) FROM sewa_dibawa_pulang 
